@@ -24,8 +24,8 @@ test.beforeEach(async (t) => {
   const prtibege = await root.createSubAccount('prtibege')
 
   //Users
-  const user1 = await root.createAccount('user1')
-  const user2 = await root.createAccount('user2')
+  const user1 = await root.createSubAccount('user1')
+  const user2 = await root.createSubAccount('user2')
 
   // Save state for test runs, it is unique for each test
   t.context.worker = worker;
@@ -44,42 +44,41 @@ test.afterEach.always(async (t) => {
   });
 });
 
+// test('Set new artist', async (t) => {
 
-test('Set new artist', async (t) => {
+//   const { contract, rambo } = t.context.accounts;
 
-  const { contract, rambo } = t.context.accounts;
+//   const newArtist = {
+//     title: 'Rambo Amadeus',
+//     about: 'Rambo je car',
+//     categories: ['music', 'art'],
+//     socials: null,
+//     subscription_types: [1, 5, 10],
+//     onetime_donations: true,
+//     image_url: null,
 
-  const newArtist = {
-    title: 'Rambo Amadeus',
-    about: 'Rambo je car',
-    categories: ['music', 'art'],
-    socials: null,
-    subscription_types: [1, 5, 10],
-    onetime_donations: true,
-    image_url: null,
+//   }
 
-  }
+//   await rambo.call(contract, 'create_artist', { ...newArtist })
 
-  await rambo.call(contract, 'create_artist', { ...newArtist })
+//   const result = await contract.view('get_artist', { account_id: rambo.accountId })
 
-  const result = await contract.view('get_artist', { account_id: rambo.accountId })
+//   console.log('final', result)
 
-  console.log('final', result)
-
-  t.deepEqual(result, {
-    account_id: rambo.accountId,
-    title: 'Rambo Amadeus',
-    about: 'Rambo je car',
-    categories: ['music', 'art'],
-    socials: null,
-    subscription_types: [1, 5, 10],
-    onetime_donations: true,
-    image_url: null,
-    total_donations_near: '0',
-    total_donations_usd: 0,
-    total_donations_count: 0
-  })
-});
+//   t.deepEqual(result, {
+//     account_id: rambo.accountId,
+//     title: 'Rambo Amadeus',
+//     about: 'Rambo je car',
+//     categories: ['music', 'art'],
+//     socials: null,
+//     subscription_types: [1, 5, 10],
+//     onetime_donations: true,
+//     image_url: null,
+//     total_donations_near: '0',
+//     total_donations_usd: 0,
+//     total_donations_count: 0
+//   })
+// });
 
 
 // test('Get all artists after register two', async (t) => {
@@ -117,27 +116,26 @@ test('Set new artist', async (t) => {
 // })
 
 
-// test('Set new user with ID', async (t) => {
+test('Set new user with ID', async (t) => {
 
-//   const { contract, user1, user2 } = t.context.accounts
+  const { contract, user1, user2 } = t.context.accounts
 
-//   await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
-//   await user2.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+  await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+  await user2.call(contract, 'create_user_profile', { userStatus: 'bronze' })
 
-//   const getAllUser: [] = await contract.view('get_all_users')
-//   let userResultsLength = getAllUser.length
+  const getAllUser: [] = await contract.view('get_all_users')
 
-//   console.log('all users', getAllUser)
-//   t.is(2, userResultsLength)
+  console.log('All users', getAllUser)
+  t.is(2, getAllUser.length)
 
-// })
+})
 
 
-// test('Reject double user registration', async (t) => {
-//   const { contract, user1 } = t.context.accounts
+test('Reject double user registration', async (t) => {
+  const { contract, user1 } = t.context.accounts
 
-//   await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
-//   const result = await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+  await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+  const result = await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
 
-//   t.is(result, 'User already exist')
-// })
+  t.is(result, 'User already exist')
+})

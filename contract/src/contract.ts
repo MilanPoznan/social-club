@@ -6,7 +6,7 @@ import { initUser } from './utils';
 @NearBindgen({})
 class Artist {
   allArtists = {}
-  // users: UserInterface[] = []
+  users: UserInterface[] = []
 
   @view({})
   get_artist({ account_id }) {
@@ -19,29 +19,30 @@ class Artist {
   }
 
   @view({})
-  // get_all_users() {
-  //   return this.users
-  // }
+  get_all_users() {
+    return this.users
+  }
 
-  // @view({})
-  // get_user({ account_id }) {
-  //   return this.users.filter(user => user.account_id === account_id)
-  // }
+  @view({})
+  get_user({ account_id }) {
+    return this.users.filter(user => user.account_id === account_id)
+  }
 
-  // @call({})
-  // create_user_profile({ status }: { status: UserStatus }): UserInterface | "User already exist" {
+  @call({})
+  create_user_profile({ status }: { status: UserStatus }): UserInterface | "User already exist" {
 
-  //   let userAccountId = near.predecessorAccountId()
+    let userAccountId = near.predecessorAccountId()
 
-  //   const checkDoesUserExist = this.users.filter(item => item.account_id === userAccountId)
+    const checkDoesUserExist = this.users.filter(item => item.account_id === userAccountId)
 
-  //   if (checkDoesUserExist.length === 0) {
-  //     return initUser(userAccountId, status)
-  //   } else {
-  //     near.log('User already exist')
-  //     return "User already exist"
-  //   }
-  // }
+    if (checkDoesUserExist.length === 0) {
+      let newUser = initUser(userAccountId, status)
+      this.users.push(newUser)
+    } else {
+      near.log('User already exist')
+      return "User already exist"
+    }
+  }
 
   @call({}) // This method changes the state, for which it cost gas
   create_artist({ title, about, categories, socials, subscription_types, onetime_donations, image_url }: ArtistDynamicProps): void {

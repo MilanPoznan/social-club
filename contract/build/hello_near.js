@@ -449,11 +449,21 @@ function NearBindgen({
   };
 }
 
-var _dec, _dec2, _dec3, _dec4, _dec5, _class, _class2;
-let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 = view({}), _dec5 = call({}), _dec(_class = (_class2 = class Artist {
-  allArtists = {};
-  // users: UserInterface[] = []
+function initUser(account_id, status) {
+  return {
+    account_id: account_id,
+    total_dontaions: '0',
+    total_dontaions_usdt: 0,
+    total_transactions: 0,
+    subscription_lists: [],
+    user_status: status
+  };
+}
 
+var _dec, _dec2, _dec3, _dec4, _dec5, _dec6, _dec7, _class, _class2;
+let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 = view({}), _dec5 = view({}), _dec6 = call({}), _dec7 = call({}), _dec(_class = (_class2 = class Artist {
+  allArtists = {};
+  users = [];
   get_artist({
     account_id
   }) {
@@ -461,6 +471,27 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
   }
   get_all_artist() {
     return this.allArtists;
+  }
+  get_all_users() {
+    return this.users;
+  }
+  get_user({
+    account_id
+  }) {
+    return this.users.filter(user => user.account_id === account_id);
+  }
+  create_user_profile({
+    status
+  }) {
+    let userAccountId = predecessorAccountId();
+    const checkDoesUserExist = this.users.filter(item => item.account_id === userAccountId);
+    if (checkDoesUserExist.length === 0) {
+      let newUser = initUser(userAccountId, status);
+      this.users.push(newUser);
+    } else {
+      log('User already exist');
+      return "User already exist";
+    }
   }
   // This method changes the state, for which it cost gas
   create_artist({
@@ -498,7 +529,7 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
 
     log(this.allArtists);
   }
-}, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec4, _dec5], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype)), _class2)) || _class);
+}, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_users", [_dec4], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_users"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_user", [_dec5], Object.getOwnPropertyDescriptor(_class2.prototype, "get_user"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_user_profile", [_dec6], Object.getOwnPropertyDescriptor(_class2.prototype, "create_user_profile"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec7], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype)), _class2)) || _class);
 function create_artist() {
   let _state = Artist._getState();
   if (!_state && Artist._requireInit()) {
@@ -510,6 +541,47 @@ function create_artist() {
   }
   let _args = Artist._getArgs();
   let _result = _contract.create_artist(_args);
+  Artist._saveToStorage(_contract);
+  if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
+}
+function create_user_profile() {
+  let _state = Artist._getState();
+  if (!_state && Artist._requireInit()) {
+    throw new Error("Contract must be initialized");
+  }
+  let _contract = Artist._create();
+  if (_state) {
+    Artist._reconstruct(_contract, _state);
+  }
+  let _args = Artist._getArgs();
+  let _result = _contract.create_user_profile(_args);
+  Artist._saveToStorage(_contract);
+  if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
+}
+function get_user() {
+  let _state = Artist._getState();
+  if (!_state && Artist._requireInit()) {
+    throw new Error("Contract must be initialized");
+  }
+  let _contract = Artist._create();
+  if (_state) {
+    Artist._reconstruct(_contract, _state);
+  }
+  let _args = Artist._getArgs();
+  let _result = _contract.get_user(_args);
+  if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
+}
+function get_all_users() {
+  let _state = Artist._getState();
+  if (!_state && Artist._requireInit()) {
+    throw new Error("Contract must be initialized");
+  }
+  let _contract = Artist._create();
+  if (_state) {
+    Artist._reconstruct(_contract, _state);
+  }
+  let _args = Artist._getArgs();
+  let _result = _contract.get_all_users(_args);
   if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
 }
 function get_all_artist() {
@@ -539,5 +611,5 @@ function get_artist() {
   if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
 }
 
-export { create_artist, get_all_artist, get_artist };
+export { create_artist, create_user_profile, get_all_artist, get_all_users, get_artist, get_user };
 //# sourceMappingURL=hello_near.js.map
