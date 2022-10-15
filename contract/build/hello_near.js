@@ -449,10 +449,11 @@ function NearBindgen({
   };
 }
 
-var _dec, _dec2, _dec3, _dec4, _class, _class2;
-let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 = call({}), _dec(_class = (_class2 = class Artist {
+var _dec, _dec2, _dec3, _dec4, _dec5, _class, _class2;
+let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 = view({}), _dec5 = call({}), _dec(_class = (_class2 = class Artist {
   allArtists = {};
-  // This method is read-only and can be called for free
+  // users: UserInterface[] = []
+
   get_artist({
     account_id
   }) {
@@ -471,7 +472,6 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
     onetime_donations,
     image_url
   }) {
-    log('this - before', this);
     let account_id = predecessorAccountId();
     log('ALL- ', this.allArtists);
     const doesAccExist = this.allArtists[account_id];
@@ -493,10 +493,12 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
       this.allArtists[account_id] = newArtist;
     } else {
       log('This account already exist ');
+      // return "This account already exist";
     }
+
     log(this.allArtists);
   }
-}, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec4], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype)), _class2)) || _class);
+}, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec4, _dec5], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype)), _class2)) || _class);
 function create_artist() {
   let _state = Artist._getState();
   if (!_state && Artist._requireInit()) {
@@ -508,7 +510,6 @@ function create_artist() {
   }
   let _args = Artist._getArgs();
   let _result = _contract.create_artist(_args);
-  Artist._saveToStorage(_contract);
   if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
 }
 function get_all_artist() {
