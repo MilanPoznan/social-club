@@ -52,9 +52,7 @@ class Artist {
 
     let account_id = near.predecessorAccountId()
 
-    near.log('ALL- ', this.allArtists)
     const doesAccExist = this.allArtists[account_id]
-    near.log('doesAccExist', doesAccExist)
 
     if (!doesAccExist) {
 
@@ -75,12 +73,8 @@ class Artist {
       this.allArtists[account_id] = newArtist
 
     } else {
-
       near.log('This account already exist ')
-      // return "This account already exist";
     }
-
-    near.log(this.allArtists)
 
   }
 
@@ -97,7 +91,6 @@ class Artist {
     const artistToDonate = this.allArtists[artist_id]
 
     let toTransfer = donationAmount;
-    near.log('toTransfer', toTransfer)
     toTransfer -= STORAGE_COST
 
     //Demo for now 
