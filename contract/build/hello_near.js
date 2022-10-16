@@ -380,6 +380,12 @@ function input() {
   env.input(0);
   return env.read_register(0);
 }
+function promiseBatchCreate(accountId) {
+  return env.promise_batch_create(accountId);
+}
+function promiseBatchActionTransfer(promiseIndex, amount) {
+  env.promise_batch_action_transfer(promiseIndex, amount);
+}
 function storageWrite(key, value) {
   let exist = env.storage_write(key, value, EVICTED_REGISTER);
   if (exist === 1n) {
@@ -449,6 +455,39 @@ function NearBindgen({
   };
 }
 
+// 'use strict';
+
+const STORAGE_COST = BigInt("1000000000000000000000");
+
+// export class Artist {
+//   account_id: string; //wallet id
+//   title: string;
+//   about: string | null;
+//   categories: string[];
+//   socials: string[] | null;
+//   subscription_types: string[];
+//   onetime_donations: boolean;
+//   image_url: null | string;
+//   total_donations_near: string;
+//   total_donations_usd: number;
+//   total_donations_count: number;
+
+//   constructor({ account_id, title, about, categories, socials, subscription_types, onetime_donations = true, image_url = null }) {
+//     this.account_id = account_id
+//     this.title = title
+//     this.about = about
+//     this.categories = categories
+//     this.socials = socials
+//     this.subscription_types = subscription_types
+//     this.onetime_donations = onetime_donations
+//     this.image_url = image_url
+//     this.total_donations_near = '0'
+//     this.total_donations_usd = 0
+//     this.total_donations_count = 0
+//   }
+
+// }
+
 function initUser(account_id, status) {
   return {
     account_id: account_id,
@@ -459,9 +498,21 @@ function initUser(account_id, status) {
     user_status: status
   };
 }
+function createDonationTransaction(artistId, donationAmount, isOneTimeDonation, timestamp) {
+  return {
+    account_to_subscribe: artistId,
+    subscription_type: donationAmount.toString(),
+    is_onetime_donation: isOneTimeDonation,
+    timestamp: timestamp
+  };
+}
 
-var _dec, _dec2, _dec3, _dec4, _dec5, _dec6, _dec7, _class, _class2;
-let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 = view({}), _dec5 = view({}), _dec6 = call({}), _dec7 = call({}), _dec(_class = (_class2 = class Artist {
+var _dec, _dec2, _dec3, _dec4, _dec5, _dec6, _dec7, _dec8, _class, _class2;
+
+//Moram logiku za storage cost da odradim kada se registruju User & Artst
+let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 = view({}), _dec5 = view({}), _dec6 = call({}), _dec7 = call({}), _dec8 = call({
+  payableFunction: true
+}), _dec(_class = (_class2 = class Artist {
   allArtists = {};
   users = [];
   get_artist({
@@ -493,7 +544,6 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
       return "User already exist";
     }
   }
-  // This method changes the state, for which it cost gas
   create_artist({
     title,
     about,
@@ -529,7 +579,61 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
 
     log(this.allArtists);
   }
-}, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_users", [_dec4], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_users"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_user", [_dec5], Object.getOwnPropertyDescriptor(_class2.prototype, "get_user"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_user_profile", [_dec6], Object.getOwnPropertyDescriptor(_class2.prototype, "create_user_profile"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec7], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype)), _class2)) || _class);
+  donate_to_artist({
+    artist_id,
+    dontaionUsdt
+  }) {
+    //User 
+    const donor = predecessorAccountId();
+    const filterCurrentUser = this.users.filter(user => user.account_id === donor);
+    const currentUser = filterCurrentUser[0];
+    const donationAmount = attachedDeposit();
+
+    //Artist
+    const artistToDonate = this.allArtists[artist_id];
+    let toTransfer = donationAmount;
+    log('toTransfer', toTransfer);
+    toTransfer -= STORAGE_COST;
+
+    //Demo for now 
+    const donationTransaction = createDonationTransaction(artist_id, donationAmount, true, '20-11-2022');
+    log('Curr user Before donations', currentUser);
+    log('Artist Before donations:', artistToDonate);
+    if (currentUser) {
+      currentUser.total_transactions += 1;
+      currentUser.total_dontaions += toTransfer;
+      currentUser.subscription_lists.push(donationTransaction);
+      currentUser.total_dontaions_usdt += dontaionUsdt;
+    } else {
+      return `Please create account for ${donor} account`;
+    }
+    let artistPreviousDonations = BigInt(artistToDonate.total_donations_near);
+    let subtractDonations = artistPreviousDonations + toTransfer;
+
+    //Artist
+    artistToDonate.total_donations_near = subtractDonations.toString();
+    artistToDonate.total_donations_count += 1;
+    artistToDonate.total_donations_usd = artistToDonate.total_donations_usd + dontaionUsdt;
+    const promise = promiseBatchCreate(artist_id);
+    promiseBatchActionTransfer(promise, toTransfer);
+    log('Curr user After donations', currentUser);
+    log('Artist After donations:', artistToDonate);
+  }
+}, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_users", [_dec4], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_users"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_user", [_dec5], Object.getOwnPropertyDescriptor(_class2.prototype, "get_user"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_user_profile", [_dec6], Object.getOwnPropertyDescriptor(_class2.prototype, "create_user_profile"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec7], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "donate_to_artist", [_dec8], Object.getOwnPropertyDescriptor(_class2.prototype, "donate_to_artist"), _class2.prototype)), _class2)) || _class);
+function donate_to_artist() {
+  let _state = Artist._getState();
+  if (!_state && Artist._requireInit()) {
+    throw new Error("Contract must be initialized");
+  }
+  let _contract = Artist._create();
+  if (_state) {
+    Artist._reconstruct(_contract, _state);
+  }
+  let _args = Artist._getArgs();
+  let _result = _contract.donate_to_artist(_args);
+  Artist._saveToStorage(_contract);
+  if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
+}
 function create_artist() {
   let _state = Artist._getState();
   if (!_state && Artist._requireInit()) {
@@ -611,5 +715,5 @@ function get_artist() {
   if (_result !== undefined) if (_result && _result.constructor && _result.constructor.name === "NearPromise") _result.onReturn();else env.value_return(Artist._serialize(_result));
 }
 
-export { create_artist, create_user_profile, get_all_artist, get_all_users, get_artist, get_user };
+export { create_artist, create_user_profile, donate_to_artist, get_all_artist, get_all_users, get_artist, get_user };
 //# sourceMappingURL=hello_near.js.map

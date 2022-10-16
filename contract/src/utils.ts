@@ -1,4 +1,4 @@
-import { ArtistDynamicProps, UserInterface, UserStatus } from './models';
+import { UserSubscription, ArtistDynamicProps, UserInterface, UserStatus } from './models';
 
 export function initUser(account_id: string, status: UserStatus): UserInterface {
   return {
@@ -9,5 +9,14 @@ export function initUser(account_id: string, status: UserStatus): UserInterface 
     subscription_lists: [],
     user_status: status
 
+  }
+}
+
+export function createDonationTransaction(artistId: string, donationAmount: bigint, isOneTimeDonation: boolean, timestamp: string): UserSubscription {
+  return {
+    account_to_subscribe: artistId,
+    subscription_type: donationAmount.toString(),
+    is_onetime_donation: isOneTimeDonation,
+    timestamp: timestamp
   }
 }

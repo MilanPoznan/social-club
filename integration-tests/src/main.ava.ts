@@ -7,7 +7,7 @@ const test = anyTest as TestFn<{
 }>;
 
 test.beforeEach(async (t) => {
-  // Init the worker and start a Sandbox server
+  // Pokreni sandbox server
   const worker = await Worker.init();
 
   // Deploy contract
@@ -24,7 +24,7 @@ test.beforeEach(async (t) => {
   const prtibege = await root.createSubAccount('prtibege')
 
   //Users
-  const user1 = await root.createSubAccount('user1')
+  const user1 = await root.createSubAccount('user1', { initialBalance: NEAR.parse('3 N').toJSON() })// Ispostovao dokumentaciju sa ovim parsiranjem
   const user2 = await root.createSubAccount('user2')
 
   // Save state for test runs, it is unique for each test
@@ -116,26 +116,59 @@ test.afterEach.always(async (t) => {
 // })
 
 
-test('Set new user with ID', async (t) => {
+// test('Set new user with ID', async (t) => {
 
-  const { contract, user1, user2 } = t.context.accounts
+//   const { contract, user1, user2 } = t.context.accounts
 
+//   await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+//   await user2.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+
+//   const getAllUser: [] = await contract.view('get_all_users')
+
+//   console.log('All users', getAllUser)
+//   t.is(2, getAllUser.length)
+
+// })
+
+
+// test('Reject double user registration', async (t) => {
+//   const { contract, user1 } = t.context.accounts
+
+//   await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+//   const result = await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+
+//   t.is(result, 'User already exist')
+// })
+
+
+test('Donate to artis', async (t) => {
+  const { contract, user1, user2, rambo } = t.context.accounts
+
+
+  const firstArtist = {
+    title: 'Rambo Amadeus',
+    about: 'Rambo je car',
+    categories: ['music', 'art'],
+    socials: null,
+    subscription_types: [1, 5, 10],
+    onetime_donations: true,
+    image_url: null,
+  }
+
+  //Create artist
+  const ramboArtist: any = await rambo.call(contract, 'create_artist', { ...firstArtist })
+  console.log('ramboArtist', ramboArtist)
+  //Create 
   await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
   await user2.call(contract, 'create_user_profile', { userStatus: 'bronze' })
 
-  const getAllUser: [] = await contract.view('get_all_users')
-
-  console.log('All users', getAllUser)
-  t.is(2, getAllUser.length)
-
-})
+  await user1.call(contract, 'donate_to_artist', { artist_id: rambo.accountId, dontaionUsdt: 10 }, { attachedDeposit: '100000000000000000000000' })
+  await user2.call(contract, 'donate_to_artist', { artist_id: rambo.accountId, dontaionUsdt: 15 }, { attachedDeposit: '150000000000000000000000' })
 
 
-test('Reject double user registration', async (t) => {
-  const { contract, user1 } = t.context.accounts
+  const userAfterDonation = await user1.call(contract, 'get_user', { account_id: user1 },)
+  console.log(`%c test userAfterDonation ${userAfterDonation}`, "color:red")
 
-  await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
-  const result = await user1.call(contract, 'create_user_profile', { userStatus: 'bronze' })
+  t.is(1, 1)
 
-  t.is(result, 'User already exist')
 })

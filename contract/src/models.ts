@@ -1,12 +1,13 @@
 // 'use strict';
 type SubscriptionType = 1 | 3 | 5 | 10 | 25 | 50 | 100 | 250 | 500
 
+export const STORAGE_COST: bigint = BigInt("1000000000000000000000")
 
 export type UserStatus = 'bronze' | 'silver' | 'gold' | 'diamon'
 
-interface UserSubscription {
+export interface UserSubscription {
   account_to_subscribe: string //Artist account 
-  subscription_type: number // Chose between artist options 1,3,5,10,50... 
+  subscription_type: string // Chose between artist options 1,3,5,10,50... 
   is_onetime_donation: boolean //
   timestamp: string
 }
