@@ -554,9 +554,7 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
     image_url
   }) {
     let account_id = predecessorAccountId();
-    log('ALL- ', this.allArtists);
     const doesAccExist = this.allArtists[account_id];
-    log('doesAccExist', doesAccExist);
     if (!doesAccExist) {
       const newArtist = {
         account_id: account_id,
@@ -571,13 +569,11 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
         total_donations_usd: 0,
         total_donations_count: 0
       };
+      log("TST", this.allArtists[account_id]);
       this.allArtists[account_id] = newArtist;
     } else {
       log('This account already exist ');
-      // return "This account already exist";
     }
-
-    log(this.allArtists);
   }
   donate_to_artist({
     artist_id,
@@ -592,7 +588,6 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
     //Artist
     const artistToDonate = this.allArtists[artist_id];
     let toTransfer = donationAmount;
-    log('toTransfer', toTransfer);
     toTransfer -= STORAGE_COST;
 
     //Demo for now 

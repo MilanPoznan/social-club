@@ -1,8 +1,13 @@
 import { NearBindgen, near, call, view, UnorderedMap } from 'near-sdk-js';
-import { ArtistDynamicProps, UserInterface, UserStatus, STORAGE_COST, UserSubscription } from './models';
+import {
+  ArtistDynamicProps,
+  UserInterface,
+  UserStatus,
+  STORAGE_COST,
+  UserSubscription,
+  Artist
+} from './models';
 import { initUser, createDonationTransaction } from './utils';
-
-
 
 //Moram logiku za storage cost da odradim kada se registruju User & Artst
 @NearBindgen({})
@@ -49,7 +54,6 @@ class Artist {
   @call({})
   create_artist({ title, about, categories, socials, subscription_types, onetime_donations, image_url }: ArtistDynamicProps): void {
 
-
     let account_id = near.predecessorAccountId()
 
     const doesAccExist = this.allArtists[account_id]
@@ -70,7 +74,9 @@ class Artist {
         total_donations_count: 0
       }
 
+
       this.allArtists[account_id] = newArtist
+      near.log("TST", this.allArtists[account_id])
 
     } else {
       near.log('This account already exist ')
