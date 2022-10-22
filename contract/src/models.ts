@@ -32,20 +32,28 @@ export interface ArtistDynamicProps {
   image_url: null | string;
 }
 
-export class Artist {
+interface ArtistDynamicPropsWithID extends ArtistDynamicProps {
+  account_id: string
+}
+
+export interface SingleAritstType {
+  [key: string]: ArtistModel
+}
+
+export class ArtistModel {
   account_id: string; //wallet id
   title: string;
   about: string | null;
   categories: string[];
   socials: string[] | null;
-  subscription_types: string[];
+  subscription_types: SubscriptionType[];
   onetime_donations: boolean;
   image_url: null | string;
   total_donations_near: string;
   total_donations_usd: number;
   total_donations_count: number;
 
-  constructor({ account_id, title, about, categories, socials, subscription_types, onetime_donations = true, image_url = null }) {
+  constructor({ account_id, title, about, categories, socials, subscription_types, onetime_donations, image_url }: ArtistDynamicPropsWithID) {
     this.account_id = account_id
     this.title = title
     this.about = about

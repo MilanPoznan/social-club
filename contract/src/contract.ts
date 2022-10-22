@@ -4,16 +4,22 @@ import {
   UserInterface,
   UserStatus,
   STORAGE_COST,
-  UserSubscription,
-  Artist
+  SingleAritstType,
+  ArtistModel
 } from './models';
-import { initUser, createDonationTransaction } from './utils';
+import { createDonationTransaction } from './utils/utils';
+import { initUser, updateUserAfterDonation } from './utils/userUtils'
+import { updateArtistAfterDonation } from './utils/artistUtils'
+
+
 
 //Moram logiku za storage cost da odradim kada se registruju User & Artst
 @NearBindgen({})
 class Artist {
-  allArtists = {}
+  allArtists: SingleAritstType = {}
   users: UserInterface[] = []
+  contractDonations: bigint
+  accountForProfit: 'maddev.testnet'
 
   @view({})
   get_artist({ account_id }) {
@@ -60,23 +66,20 @@ class Artist {
 
     if (!doesAccExist) {
 
-      const newArtist = {
-        account_id: account_id,
+
+      const newArtist = new ArtistModel({
+        account_id,
         title: title,
         about: about,
         categories: categories,
         socials: socials,
         subscription_types: subscription_types,
         onetime_donations: onetime_donations,
-        image_url: image_url,
-        total_donations_near: '0',
-        total_donations_usd: 0,
-        total_donations_count: 0
-      }
+        image_url: image_url
+      })
 
 
       this.allArtists[account_id] = newArtist
-      near.log("TST", this.allArtists[account_id])
 
     } else {
       near.log('This account already exist ')
@@ -97,8 +100,19 @@ class Artist {
     const artistToDonate = this.allArtists[artist_id]
 
     let toTransfer = donationAmount;
-    toTransfer -= STORAGE_COST
+    near.log(1, toTransfer)
 
+    toTransfer -= STORAGE_COST
+    near.log(2, toTransfer)
+
+
+    //My 5% 
+    let myMoney = toTransfer * BigInt(5000)
+    let transferToArtist = toTransfer - myMoney
+    near.log('myMoney- ', myMoney)
+    near.log('transferToArtist- ', transferToArtist)
+
+    near.log(transferToArtist)
     //Demo for now 
     const donationTransaction = createDonationTransaction(artist_id, donationAmount, true, '20-11-2022')
 
@@ -106,28 +120,25 @@ class Artist {
     near.log('Artist Before donations:', artistToDonate);
 
     if (currentUser) {
-      currentUser.total_transactions += 1;
-      currentUser.total_dontaions += toTransfer;
-      (currentUser.subscription_lists as UserSubscription[]).push(donationTransaction);
-      currentUser.total_dontaions_usdt += dontaionUsdt
+      updateUserAfterDonation(currentUser, donationTransaction, dontaionUsdt, toTransfer)
     } else {
       return `Please create account for ${donor} account`
     }
 
-    let artistPreviousDonations: bigint = BigInt(artistToDonate.total_donations_near)
-    let subtractDonations = artistPreviousDonations + toTransfer
+    updateArtistAfterDonation(artistToDonate, toTransfer, dontaionUsdt)
 
-    //Artist
-    artistToDonate.total_donations_near = subtractDonations.toString()
-    artistToDonate.total_donations_count += 1
-    artistToDonate.total_donations_usd = artistToDonate.total_donations_usd + dontaionUsdt
-
+    //Send to artist
     const promise = near.promiseBatchCreate(artist_id)
-    near.promiseBatchActionTransfer(promise, toTransfer)
+    const transaction = near.promiseBatchActionTransfer(promise, toTransfer)
 
-    near.log('Curr user After donations', currentUser)
-    near.log('Artist After donations:', artistToDonate)
 
+    //Send to me 
+    // const myPromise = near.promiseBatchCreate(this.accountForProfit)
+    // const myTransaction = near.promiseBatchActionTransfer(myPromise, myMoney)
+
+    near.log('transaction ==== ', transaction)
+    // near.log('Curr user After donations', currentUser)
+    // near.log('myTransaction === :', myTransaction)
 
   }
 }

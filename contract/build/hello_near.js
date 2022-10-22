@@ -458,36 +458,48 @@ function NearBindgen({
 // 'use strict';
 
 const STORAGE_COST = BigInt("1000000000000000000000");
+class ArtistModel {
+  //wallet id
 
-// export class Artist {
-//   account_id: string; //wallet id
-//   title: string;
-//   about: string | null;
-//   categories: string[];
-//   socials: string[] | null;
-//   subscription_types: string[];
-//   onetime_donations: boolean;
-//   image_url: null | string;
-//   total_donations_near: string;
-//   total_donations_usd: number;
-//   total_donations_count: number;
+  constructor({
+    account_id,
+    title,
+    about,
+    categories,
+    socials,
+    subscription_types,
+    onetime_donations,
+    image_url
+  }) {
+    this.account_id = account_id;
+    this.title = title;
+    this.about = about;
+    this.categories = categories;
+    this.socials = socials;
+    this.subscription_types = subscription_types;
+    this.onetime_donations = onetime_donations;
+    this.image_url = image_url;
+    this.total_donations_near = '0';
+    this.total_donations_usd = 0;
+    this.total_donations_count = 0;
+  }
+}
 
-//   constructor({ account_id, title, about, categories, socials, subscription_types, onetime_donations = true, image_url = null }) {
-//     this.account_id = account_id
-//     this.title = title
-//     this.about = about
-//     this.categories = categories
-//     this.socials = socials
-//     this.subscription_types = subscription_types
-//     this.onetime_donations = onetime_donations
-//     this.image_url = image_url
-//     this.total_donations_near = '0'
-//     this.total_donations_usd = 0
-//     this.total_donations_count = 0
-//   }
+function createDonationTransaction(artistId, donationAmount, isOneTimeDonation, timestamp) {
+  return {
+    account_to_subscribe: artistId,
+    subscription_type: donationAmount.toString(),
+    is_onetime_donation: isOneTimeDonation,
+    timestamp: timestamp
+  };
+}
 
-// }
-
+function updateUserAfterDonation(currentUser, donationTransaction, dontaionUsdt, toTransfer) {
+  currentUser.total_transactions += 1;
+  currentUser.total_dontaions += toTransfer;
+  currentUser.subscription_lists.push(donationTransaction);
+  currentUser.total_dontaions_usdt += dontaionUsdt;
+}
 function initUser(account_id, status) {
   return {
     account_id: account_id,
@@ -498,13 +510,15 @@ function initUser(account_id, status) {
     user_status: status
   };
 }
-function createDonationTransaction(artistId, donationAmount, isOneTimeDonation, timestamp) {
-  return {
-    account_to_subscribe: artistId,
-    subscription_type: donationAmount.toString(),
-    is_onetime_donation: isOneTimeDonation,
-    timestamp: timestamp
-  };
+
+function updateArtistAfterDonation(artistToDonate, toTransfer, dontaionUsdt) {
+  let artistPreviousDonations = BigInt(artistToDonate.total_donations_near);
+  let calcTotalDonations = artistPreviousDonations + toTransfer;
+
+  //Artist
+  artistToDonate.total_donations_near = calcTotalDonations.toString();
+  artistToDonate.total_donations_count += 1;
+  artistToDonate.total_donations_usd = artistToDonate.total_donations_usd + dontaionUsdt;
 }
 
 var _dec, _dec2, _dec3, _dec4, _dec5, _dec6, _dec7, _dec8, _class, _class2;
@@ -556,20 +570,16 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
     let account_id = predecessorAccountId();
     const doesAccExist = this.allArtists[account_id];
     if (!doesAccExist) {
-      const newArtist = {
-        account_id: account_id,
+      const newArtist = new ArtistModel({
+        account_id,
         title: title,
         about: about,
         categories: categories,
         socials: socials,
         subscription_types: subscription_types,
         onetime_donations: onetime_donations,
-        image_url: image_url,
-        total_donations_near: '0',
-        total_donations_usd: 0,
-        total_donations_count: 0
-      };
-      log("TST", this.allArtists[account_id]);
+        image_url: image_url
+      });
       this.allArtists[account_id] = newArtist;
     } else {
       log('This account already exist ');
@@ -588,31 +598,38 @@ let Artist = (_dec = NearBindgen({}), _dec2 = view({}), _dec3 = view({}), _dec4 
     //Artist
     const artistToDonate = this.allArtists[artist_id];
     let toTransfer = donationAmount;
+    log(1, toTransfer);
     toTransfer -= STORAGE_COST;
+    log(2, toTransfer);
 
+    //My 5% 
+    let myMoney = toTransfer * BigInt(5000);
+    let transferToArtist = toTransfer - myMoney;
+    log('myMoney- ', myMoney);
+    log('myMoney- ', transferToArtist);
+    log(transferToArtist);
     //Demo for now 
     const donationTransaction = createDonationTransaction(artist_id, donationAmount, true, '20-11-2022');
     log('Curr user Before donations', currentUser);
     log('Artist Before donations:', artistToDonate);
     if (currentUser) {
-      currentUser.total_transactions += 1;
-      currentUser.total_dontaions += toTransfer;
-      currentUser.subscription_lists.push(donationTransaction);
-      currentUser.total_dontaions_usdt += dontaionUsdt;
+      updateUserAfterDonation(currentUser, donationTransaction, dontaionUsdt, toTransfer);
     } else {
       return `Please create account for ${donor} account`;
     }
-    let artistPreviousDonations = BigInt(artistToDonate.total_donations_near);
-    let subtractDonations = artistPreviousDonations + toTransfer;
+    updateArtistAfterDonation(artistToDonate, toTransfer, dontaionUsdt);
 
-    //Artist
-    artistToDonate.total_donations_near = subtractDonations.toString();
-    artistToDonate.total_donations_count += 1;
-    artistToDonate.total_donations_usd = artistToDonate.total_donations_usd + dontaionUsdt;
+    //Send to artist
     const promise = promiseBatchCreate(artist_id);
-    promiseBatchActionTransfer(promise, toTransfer);
-    log('Curr user After donations', currentUser);
-    log('Artist After donations:', artistToDonate);
+    const transaction = promiseBatchActionTransfer(promise, toTransfer);
+
+    //Send to me 
+    // const myPromise = near.promiseBatchCreate(this.accountForProfit)
+    // const myTransaction = near.promiseBatchActionTransfer(myPromise, myMoney)
+
+    log('transaction ==== ', transaction);
+    // near.log('Curr user After donations', currentUser)
+    // near.log('myTransaction === :', myTransaction)
   }
 }, (_applyDecoratedDescriptor(_class2.prototype, "get_artist", [_dec2], Object.getOwnPropertyDescriptor(_class2.prototype, "get_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_artist", [_dec3], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_all_users", [_dec4], Object.getOwnPropertyDescriptor(_class2.prototype, "get_all_users"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "get_user", [_dec5], Object.getOwnPropertyDescriptor(_class2.prototype, "get_user"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_user_profile", [_dec6], Object.getOwnPropertyDescriptor(_class2.prototype, "create_user_profile"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "create_artist", [_dec7], Object.getOwnPropertyDescriptor(_class2.prototype, "create_artist"), _class2.prototype), _applyDecoratedDescriptor(_class2.prototype, "donate_to_artist", [_dec8], Object.getOwnPropertyDescriptor(_class2.prototype, "donate_to_artist"), _class2.prototype)), _class2)) || _class);
 function donate_to_artist() {
